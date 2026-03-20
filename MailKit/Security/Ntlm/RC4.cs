@@ -34,7 +34,8 @@ namespace MailKit.Security.Ntlm {
 
 	class RC4 : SymmetricAlgorithm, ICryptoTransform
 	{
-		byte[] key, state;
+		byte[] state;
+		byte[]? key;
 		byte x, y;
 		bool disposed;
 
@@ -85,12 +86,12 @@ namespace MailKit.Security.Ntlm {
 			}
 		}
 
-		public override ICryptoTransform CreateEncryptor (byte[] rgbKey, byte[] rgvIV)
+		public override ICryptoTransform CreateEncryptor (byte[] rgbKey, byte[]? rgvIV)
 		{
 			return new RC4 { Key = rgbKey };
 		}
 
-		public override ICryptoTransform CreateDecryptor (byte[] rgbKey, byte[] rgvIV)
+		public override ICryptoTransform CreateDecryptor (byte[] rgbKey, byte[]? rgvIV)
 		{
 			return new RC4 { Key = rgbKey };
 		}
@@ -104,7 +105,8 @@ namespace MailKit.Security.Ntlm {
 		public override void GenerateKey ()
 		{
 			key = new byte[KeySizeValue >> 3];
-			RandomNumberGenerator.Create ().GetBytes (key);
+			using (var rng = RandomNumberGenerator.Create ())
+				rng.GetBytes (key);
 			KeySetup (key);
 		}
 
@@ -194,10 +196,8 @@ namespace MailKit.Security.Ntlm {
 
 			Array.Clear (state, 0, state.Length);
 
-			if (disposing) {
-				state = null;
+			if (disposing)
 				key = null;
-			}
 
 			disposed = true;
 		}
